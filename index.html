@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法政二高ハンドボール部 体調管理アプリ</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', Meiryo, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .alive-logo {
+            width: 80px;
+            height: 80px;
+            background: #f56500;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(245, 101, 0, 0.3);
+        }
+        
+        .header h1 {
+            color: #1a365d;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .header h2 {
+            color: #f56500;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            min-width: 140px;
+        }
+        
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #f56500, #ff7b2e);
+            box-shadow: 0 4px 15px rgba(245, 101, 0, 0.3);
+        }
+        
+        .nav-btn.secondary {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-btn.active {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .screen {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1a365d;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #f56500;
+            box-shadow: 0 0 0 3px rgba(245, 101, 0, 0.1);
+        }
+        
+        .wellness-slider {
+            margin: 20px 0;
+        }
+        
+        .slider-container {
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #ff4757, #ffa502, #2ed573);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #1a365d;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #1a365d;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .wellness-value {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a365d;
+            margin: 10px 0;
+        }
+        
+        .wellness-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+            display: block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f56500, #ff7b2e);
+            box-shadow: 0 4px 15px rgba(245, 101, 0, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .admin-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .admin-controls .btn {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .admin-controls .btn:hover {
+            background: linear-gradient(135deg, #f56500, #ff7b2e);
+            box-shadow: 0 6px 20px rgba(245, 101, 0, 0.3);
+        }
+        
+        .admin-controls .file-input-label {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .admin-controls .file-input-label:hover {
+            background: linear-gradient(135deg, #f56500, #ff7b2e);
+            box-shadow: 0 6px 20px rgba(245, 101, 0, 0.3);
+        }
+        
+        .export-controls .btn {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .export-controls .btn:hover {
+            background: linear-gradient(135deg, #f56500, #ff7b2e);
+            box-shadow: 0 6px 20px rgba(245, 101, 0, 0.3);
+        }
+        
+        .player-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .player-info {
+            flex: 1;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            color: #1a365d;
+            font-size: 16px;
+        }
+        
+        .player-stats {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #f56500;
+        }
+        
+        .stat-card h3 {
+            color: #1a365d;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #f56500;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container h3 {
+            color: #1a365d;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .data-export {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .export-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+            box-sizing: border-box;
+        }
+        
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-stat {
+            background: linear-gradient(135deg, #1a365d, #2d5a87);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(26, 54, 93, 0.3);
+        }
+        
+        .quick-stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .quick-stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .privacy-note {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #1565c0;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .header h2 {
+                font-size: 16px;
+            }
+            
+            .alive-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                max-width: 280px;
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+            
+            .screen {
+                padding: 15px;
+            }
+            
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-controls {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .export-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .btn, .file-input-label {
+                width: 100%;
+                max-width: 280px;
+                font-size: 14px;
+                padding: 12px 20px;
+                margin: 5px auto;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .form-control {
+                font-size: 16px;
+                padding: 12px 16px;
+            }
+            
+            .player-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .remove-btn {
+                align-self: flex-end;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .logo-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .header h2 {
+                font-size: 14px;
+            }
+            
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            .quick-stat-value {
+                font-size: 20px;
+            }
+            
+            .admin-controls {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .btn, .file-input-label {
+                font-size: 13px;
+                padding: 10px 16px;
+                max-width: 100%;
+            }
+            
+            .player-list {
+                padding: 15px;
+            }
+            
+            .data-export {
+                padding: 15px;
+            }
+            
+            .export-controls {
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <div class="alive-logo">ALIVE</div>
+                <div>
+                    <h1>法政二高ハンドボール部</h1>
+                    <h2>体調管理アプリ</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="nav-btn secondary active" onclick="showScreen('player')">選手入力</button>
+            <button class="nav-btn secondary" onclick="showScreen('admin')">管理者画面</button>
+            <button class="nav-btn secondary" onclick="showScreen('stats')">チーム統計</button>
+        </div>
+        
+        <!-- 選手入力画面 -->
+        <div id="playerScreen" class="screen active">
+            <div class="privacy-note">
+                🔒 プライバシー保護：あなたのデータは他の選手には表示されません
+            </div>
+            
+            <div class="form-group">
+                <label for="playerSelect">選手名を選択してください</label>
+                <select id="playerSelect" class="form-control">
+                    <option value="">選手を選択...</option>
+                </select>
+            </div>
+            
+            <div class="form-group wellness-slider">
+                <label>からだの疲労感 (修正ボルグスケール 0-10)</label>
+                <div class="slider-container">
+                    <input type="range" id="wellnessSlider" class="slider" min="0" max="10" value="0">
+                    <div class="wellness-value" id="wellnessValue">0 - 感じない</div>
+                    <div class="wellness-labels">
+                        <span>0: 感じない</span>
+                        <span>5: 強い</span>
+                        <span>10: 非常に強い</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="weight">体重 (kg)</label>
+                <input type="number" id="weight" class="form-control" step="0.1" placeholder="例: 65.5">
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">メモ・特記事項</label>
+                <textarea id="notes" class="form-control" rows="3" placeholder="体調について気になることがあれば記入してください..."></textarea>
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitPlayerData()">データを記録</button>
+            
+            <div id="playerAlert" class="alert" style="display: none;"></div>
+        </div>
+        
+        <!-- 管理者画面 -->
+        <div id="adminScreen" class="screen">
+            <div class="admin-controls">
+                <button class="btn btn-success" onclick="addPlayer()">新しい選手を追加</button>
+                <button class="btn btn-secondary" onclick="exportData()">データをエクスポート</button>
+                <label for="importFile" class="file-input-label">
+                    データをインポート
+                    <input type="file" id="importFile" class="file-input" accept=".csv" onchange="importData()">
+                </label>
+                <button class="btn btn-danger" onclick="clearAllData()">全データ削除</button>
+            </div>
+            
+            <div class="player-list">
+                <h3 style="color: #1a365d; margin-bottom: 15px;">登録選手一覧</h3>
+                <div id="playerList"></div>
+            </div>
+            
+            <div class="data-export">
+                <h3 style="color: #1a365d; margin-bottom: 15px;">データ管理</h3>
+                <div class="export-controls">
+                    <button class="btn btn-secondary" onclick="exportWeeklyReport()">週間レポート出力</button>
+                    <button class="btn btn-secondary" onclick="exportPlayerReport()">個人別レポート出力</button>
+                </div>
+            </div>
+            
+            <div id="adminAlert" class="alert" style="display: none;"></div>
+        </div>
+        
+        <!-- チーム統計画面 -->
+        <div id="statsScreen" class="screen">
+            <div class="quick-stats" id="quickStats"></div>
+            
+            <div class="statistics-grid">
+                <div class="stat-card">
+                    <h3>📊 今日の平均疲労感</h3>
+                    <div class="stat-value" id="todayAvgWellness">-</div>
+                    <div class="stat-label">ボルグスケール</div>
+                </div>
+                <div class="stat-card">
+                    <h3>📈 今週の平均疲労感</h3>
+                    <div class="stat-value" id="weekAvgWellness">-</div>
+                    <div class="stat-label">ボルグスケール</div>
+                </div>
+                <div class="stat-card">
+                    <h3>🏃‍♂️ 記録済み選手数</h3>
+                    <div class="stat-value" id="recordedPlayers">-</div>
+                    <div class="stat-label">人 / 全体</div>
+                </div>
+                <div class="stat-card">
+                    <h3>⚖️ 平均体重変化</h3>
+                    <div class="stat-value" id="avgWeightChange">-</div>
+                    <div class="stat-label">kg (今週)</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>📈 週間からだの疲労感推移 (修正ボルグスケール)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="wellnessChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>⚖️ チーム体重推移</h3>
+                <div class="chart-wrapper">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>👤 個人別体重変化</h3>
+                <div class="form-group">
+                    <select id="playerWeightSelect" class="form-control" onchange="updateIndividualWeightChart()">
+                        <option value="">選手を選択...</option>
+                    </select>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="individualWeightChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="statsAlert" class="alert" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let players = JSON.parse(localStorage.getItem('players')) || [];
+        let healthData = JSON.parse(localStorage.getItem('healthData')) || [];
+        let currentPlayer = '';
+        let wellnessChart = null;
+        let weightChart = null;
+        let individualWeightChart = null;
+        
+        // 修正ボルグスケールの定義
+        const borgScale = {
+            0: "感じない",
+            0.5: "非常に弱い",
+            1: "やや弱い", 
+            2: "弱い",
+            3: "",
+            4: "多少強い",
+            5: "強い",
+            6: "",
+            7: "とても強い",
+            8: "",
+            9: "",
+            10: "非常に強い"
+        };
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSlider();
+            updatePlayerSelect();
+            updatePlayerList();
+            updateStatistics();
+        });
+        
+        // スライダー初期化
+        function initializeSlider() {
+            const slider = document.getElementById('wellnessSlider');
+            const valueDisplay = document.getElementById('wellnessValue');
+            
+            slider.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                const description = borgScale[value] || "";
+                valueDisplay.textContent = description ? `${value} - ${description}` : value;
+            });
+            
+            // 初期表示
+            const initialValue = parseFloat(slider.value);
+            const initialDescription = borgScale[initialValue] || "";
+            valueDisplay.textContent = initialDescription ? `${initialValue} - ${initialDescription}` : initialValue;
+        }
+        
+        // 画面切り替え
+        function showScreen(screen) {
+            // 管理者画面の場合はパスワード確認
+            if (screen === 'admin') {
+                const password = prompt('管理者パスワードを入力してください:');
+                if (password !== 'hosei2nd.alive') {
+                    alert('パスワードが間違っています。');
+                    return;
+                }
+            }
+            
+            // 全ての画面を非表示
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // 選択した画面を表示
+            document.getElementById(screen + 'Screen').classList.add('active');
+            event.target.classList.add('active');
+            
+            // 統計画面の場合はチャートを更新
+            if (screen === 'stats') {
+                updateStatistics();
+            }
+        }
+        
+        // 新しい選手を追加
+        function addPlayer() {
+            const name = prompt('新しい選手の名前を入力してください:');
+            if (name && name.trim()) {
+                const playerName = name.trim();
+                if (players.includes(playerName)) {
+                    showAlert('adminAlert', 'この選手は既に登録されています。', 'warning');
+                    return;
+                }
+                players.push(playerName);
+                saveData();
+                updatePlayerSelect();
+                updatePlayerList();
+                showAlert('adminAlert', `${playerName} を追加しました。`, 'success');
+            }
+        }
+        
+        // 選手を削除
+        function removePlayer(playerName) {
+            if (confirm(`${playerName} を削除しますか？関連するデータもすべて削除されます。`)) {
+                players = players.filter(p => p !== playerName);
+                healthData = healthData.filter(data => data.player !== playerName);
+                saveData();
+                updatePlayerSelect();
+                updatePlayerList();
+                updateStatistics();
+                showAlert('adminAlert', `${playerName} を削除しました。`, 'success');
+            }
+        }
+        
+        // 選手選択肢を更新
+        function updatePlayerSelect() {
+            const select = document.getElementById('playerSelect');
+            select.innerHTML = '<option value="">選手を選択...</option>';
+            
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                select.appendChild(option);
+            });
+        }
+        
+        // 選手リストを更新
+        function updatePlayerList() {
+            const container = document.getElementById('playerList');
+            container.innerHTML = '';
+            
+            if (players.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">登録されている選手がいません。</p>';
+                return;
+            }
+            
+            players.forEach(player => {
+                const playerData = healthData.filter(data => data.player === player);
+                const latestData = playerData[playerData.length - 1];
+                const averageWellness = playerData.length > 0 ? 
+                    (playerData.reduce((sum, data) => sum + data.wellness, 0) / playerData.length).toFixed(1) : 'なし';
+                
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `
+                    <div class="player-info">
+                        <div class="player-name">${player}</div>
+                        <div class="player-stats">記録数: ${playerData.length}回 | 平均体調: ${averageWellness}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removePlayer('${player}')">削除</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // 選手データを送信
+        function submitPlayerData() {
+            const playerName = document.getElementById('playerSelect').value;
+            const wellness = parseFloat(document.getElementById('wellnessSlider').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const notes = document.getElementById('notes').value.trim();
+            
+            if (!playerName) {
+                showAlert('playerAlert', '選手名を選択してください。', 'warning');
+                return;
+            }
+            
+            if (!weight || weight <= 0) {
+                showAlert('playerAlert', '正しい体重を入力してください。', 'warning');
+                return;
+            }
+            
+            // 今日の既存データをチェック
+            const today = new Date().toDateString();
+            const existingTodayData = healthData.find(data => 
+                data.player === playerName && new Date(data.date).toDateString() === today
+            );
+            
+            if (existingTodayData) {
+                if (!confirm('今日のデータが既に存在します。上書きしますか？')) {
+                    return;
+                }
+                // 既存データを削除
+                healthData = healthData.filter(data => 
+                    !(data.player === playerName && new Date(data.date).toDateString() === today)
+                );
+            }
+            
+            // 新しいデータを追加
+            const newData = {
+                id: Date.now().toString(),
+                player: playerName,
+                date: new Date().toISOString(),
+                wellness: wellness,
+                weight: weight,
+                notes: notes
+            };
+            
+            healthData.push(newData);
+            saveData();
+            
+            // フォームをリセット
+            document.getElementById('wellnessSlider').value = 0;
+            document.getElementById('wellnessValue').textContent = '0 - 感じない';
+            document.getElementById('weight').value = '';
+            document.getElementById('notes').value = '';
+            
+            showAlert('playerAlert', 'データを記録しました！', 'success');
+        }
+        
+        // 統計情報を更新
+        function updateStatistics() {
+            updateQuickStats();
+            updateMainStats();
+            updateCharts();
+            updatePlayerWeightSelect();
+        }
+        
+        // クイック統計を更新
+        function updateQuickStats() {
+            const container = document.getElementById('quickStats');
+            const today = new Date().toDateString();
+            const todayData = healthData.filter(data => new Date(data.date).toDateString() === today);
+            
+            // 7日間のデータ
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const weekData = healthData.filter(data => new Date(data.date) >= sevenDaysAgo);
+            
+            const stats = [
+                {
+                    label: '今日の記録数',
+                    value: todayData.length,
+                    unit: '人'
+                },
+                {
+                    label: '今週の記録数',
+                    value: weekData.length,
+                    unit: '件'
+                },
+                {
+                    label: '登録選手数',
+                    value: players.length,
+                    unit: '人'
+                },
+                {
+                    label: '総記録数',
+                    value: healthData.length,
+                    unit: '件'
+                }
+            ];
+            
+            container.innerHTML = stats.map(stat => `
+                <div class="quick-stat">
+                    <div class="quick-stat-value">${stat.value}</div>
+                    <div class="quick-stat-label">${stat.label}</div>
+                </div>
+            `).join('');
+        }
+        
+        // メイン統計を更新
+        function updateMainStats() {
+            const today = new Date().toDateString();
+            const todayData = healthData.filter(data => new Date(data.date).toDateString() === today);
+            
+            // 今日の平均体調
+            const todayAvg = todayData.length > 0 ? 
+                (todayData.reduce((sum, data) => sum + data.wellness, 0) / todayData.length).toFixed(1) : '-';
+            document.getElementById('todayAvgWellness').textContent = todayAvg;
+            
+            // 7日間のデータ
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const weekData = healthData.filter(data => new Date(data.date) >= sevenDaysAgo);
+            
+            // 今週の平均体調
+            const weekAvg = weekData.length > 0 ? 
+                (weekData.reduce((sum, data) => sum + data.wellness, 0) / weekData.length).toFixed(1) : '-';
+            document.getElementById('weekAvgWellness').textContent = weekAvg;
+            
+            // 記録済み選手数
+            const recordedToday = new Set(todayData.map(data => data.player)).size;
+            document.getElementById('recordedPlayers').textContent = `${recordedToday} / ${players.length}`;
+            
+            // 平均体重変化
+            const weightChange = calculateWeightChange();
+            document.getElementById('avgWeightChange').textContent = weightChange;
+        }
+        
+        // 体重変化を計算
+        function calculateWeightChange() {
+            if (healthData.length === 0) return '-';
+            
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            const playerWeights = {};
+            
+            healthData.forEach(data => {
+                const date = new Date(data.date);
+                if (!playerWeights[data.player]) {
+                    playerWeights[data.player] = { current: [], previous: [] };
+                }
+                
+                if (date >= sevenDaysAgo) {
+                    playerWeights[data.player].current.push(data.weight);
+                } else {
+                    playerWeights[data.player].previous.push(data.weight);
+                }
+            });
+            
+            let totalChange = 0;
+            let playerCount = 0;
+            
+            Object.keys(playerWeights).forEach(player => {
+                const current = playerWeights[player].current;
+                const previous = playerWeights[player].previous;
+                
+                if (current.length > 0 && previous.length > 0) {
+                    const currentAvg = current.reduce((a, b) => a + b) / current.length;
+                    const previousAvg = previous.reduce((a, b) => a + b) / previous.length;
+                    totalChange += currentAvg - previousAvg;
+                    playerCount++;
+                }
+            });
+            
+            return playerCount > 0 ? (totalChange / playerCount).toFixed(1) + 'kg' : '-';
+        }
+        
+        // チャートを更新
+        function updateCharts() {
+            updateWellnessChart();
+            updateWeightChart();
+        }
+        
+        // 個人別体重チャート用の選手選択を更新
+        function updatePlayerWeightSelect() {
+            const select = document.getElementById('playerWeightSelect');
+            select.innerHTML = '<option value="">選手を選択...</option>';
+            
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                select.appendChild(option);
+            });
+        }
+        
+        // 個人別体重チャートを更新
+        function updateIndividualWeightChart() {
+            const selectedPlayer = document.getElementById('playerWeightSelect').value;
+            const ctx = document.getElementById('individualWeightChart').getContext('2d');
+            
+            if (individualWeightChart) {
+                individualWeightChart.destroy();
+            }
+            
+            if (!selectedPlayer) {
+                return;
+            }
+            
+            // 選手のデータを取得
+            const playerData = healthData
+                .filter(data => data.player === selectedPlayer)
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(-30); // 最新30件
+            
+            if (playerData.length === 0) {
+                return;
+            }
+            
+            const dates = playerData.map(data => {
+                const date = new Date(data.date);
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            });
+            
+            const weights = playerData.map(data => data.weight);
+            
+            individualWeightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: `${selectedPlayer}の体重変化 (kg)`,
+                        data: weights,
+                        borderColor: '#f56500',
+                        backgroundColor: 'rgba(245, 101, 0, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#f56500',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(1) + 'kg';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return `体重: ${context.parsed.y.toFixed(1)}kg`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 体調チャートを更新
+        function updateWellnessChart() {
+            const ctx = document.getElementById('wellnessChart').getContext('2d');
+            
+            if (wellnessChart) {
+                wellnessChart.destroy();
+            }
+            
+            // 過去7日間のデータを取得
+            const dates = [];
+            const avgWellness = [];
+            const stdDev = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toDateString();
+                
+                const dayData = healthData.filter(data => 
+                    new Date(data.date).toDateString() === dateStr
+                );
+                
+                dates.push(formatDate(date));
+                
+                if (dayData.length > 0) {
+                    const avg = dayData.reduce((sum, data) => sum + data.wellness, 0) / dayData.length;
+                    let sd = 0;
+                    if (dayData.length > 1) {
+                        const variance = dayData.reduce((sum, data) => sum + Math.pow(data.wellness - avg, 2), 0) / dayData.length;
+                        sd = Math.sqrt(variance);
+                    } else {
+                        // データが1件の場合は固定値として0.5を使用（視認性のため）
+                        sd = 0.5;
+                    }
+                    
+                    avgWellness.push(avg);
+                    stdDev.push(sd);
+                } else {
+                    avgWellness.push(null);
+                    stdDev.push(0);
+                }
+            }
+            
+            // グローバル変数として保存（プラグインで使用）
+            window.chartAvgWellness = avgWellness;
+            window.chartStdDev = stdDev;
+            
+            wellnessChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '平均疲労感',
+                        data: avgWellness,
+                        borderColor: '#f56500',
+                        backgroundColor: 'rgba(245, 101, 0, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#f56500',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            min: 0,
+                            max: 10,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 12
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.4
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    }
+                },
+                plugins: [{
+                    id: 'errorBars',
+                    afterDatasetsDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const avgData = window.chartAvgWellness || [];
+                        const stdData = window.chartStdDev || [];
+                        
+                        if (meta && meta.data) {
+                            meta.data.forEach((point, index) => {
+                                if (point && avgData[index] !== null && avgData[index] !== undefined && stdData[index] >= 0) {
+                                    const x = point.x;
+                                    const yScale = chart.scales.y;
+                                    
+                                    const upperValue = Math.min(10, avgData[index] + Math.max(stdData[index], 0.1));
+                                    const lowerValue = Math.max(0, avgData[index] - Math.max(stdData[index], 0.1));
+                                    
+                                    const yUpper = yScale.getPixelForValue(upperValue);
+                                    const yLower = yScale.getPixelForValue(lowerValue);
+                                    
+                                    ctx.save();
+                                    ctx.strokeStyle = '#1a365d';
+                                    ctx.lineWidth = 2;
+                                    ctx.setLineDash([]);
+                                    
+                                    // 縦線（ヒゲ）
+                                    ctx.beginPath();
+                                    ctx.moveTo(x, yUpper);
+                                    ctx.lineTo(x, yLower);
+                                    ctx.stroke();
+                                    
+                                    // 上端の横線
+                                    ctx.beginPath();
+                                    ctx.moveTo(x - 8, yUpper);
+                                    ctx.lineTo(x + 8, yUpper);
+                                    ctx.stroke();
+                                    
+                                    // 下端の横線
+                                    ctx.beginPath();
+                                    ctx.moveTo(x - 8, yLower);
+                                    ctx.lineTo(x + 8, yLower);
+                                    ctx.stroke();
+                                    
+                                    ctx.restore();
+                                }
+                            });
+                        }
+                    }
+                }]
+            });
+        }
+        
+        // 体重チャートを更新
+        function updateWeightChart() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            
+            if (weightChart) {
+                weightChart.destroy();
+            }
+            
+            // 過去7日間のデータを取得
+            const dates = [];
+            const avgWeight = [];
+            const weightStdDev = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toDateString();
+                
+                const dayData = healthData.filter(data => 
+                    new Date(data.date).toDateString() === dateStr
+                );
+                
+                dates.push(formatDate(date));
+                
+                if (dayData.length > 0) {
+                    const avg = dayData.reduce((sum, data) => sum + data.weight, 0) / dayData.length;
+                    let sd = 0;
+                    if (dayData.length > 1) {
+                        const variance = dayData.reduce((sum, data) => sum + Math.pow(data.weight - avg, 2), 0) / dayData.length;
+                        sd = Math.sqrt(variance);
+                    } else {
+                        // データが1件の場合は体重に比例した標準偏差を使用
+                        sd = Math.max(0.5, avg * 0.015); // 体重の1.5%または0.5kgの大きい方
+                    }
+                    
+                    avgWeight.push(avg);
+                    weightStdDev.push(sd);
+                    
+                    // デバッグ情報
+                    console.log(`${formatDate(date)}: 平均=${avg.toFixed(1)}kg, 標準偏差=${sd.toFixed(2)}kg, データ数=${dayData.length}`);
+                } else {
+                    avgWeight.push(null);
+                    weightStdDev.push(0);
+                }
+            }
+            
+            // 縦軸の範囲を事前計算
+            const validWeights = avgWeight.filter(w => w !== null && w !== undefined);
+            const validStdDevs = weightStdDev.filter(s => s !== null && s !== undefined && s > 0);
+            
+            let yMin = 50, yMax = 100;
+            
+            if (validWeights.length > 0) {
+                const dataMin = Math.min(...validWeights);
+                const dataMax = Math.max(...validWeights);
+                const maxStdDev = validStdDevs.length > 0 ? Math.max(...validStdDevs) : 1.0;
+                
+                // 標準偏差に基づいてパディングを計算
+                const padding = Math.max(maxStdDev * 1.5, 2); // 標準偏差の1.5倍または最低2kg
+                
+                yMin = Math.max(10, dataMin - padding);
+                yMax = dataMax + padding;
+                
+                console.log(`体重グラフ範囲: ${yMin.toFixed(1)}kg - ${yMax.toFixed(1)}kg, 最大標準偏差: ${maxStdDev.toFixed(2)}kg`);
+            }
+            
+            // グローバル変数として保存（プラグインで使用）
+            window.chartAvgWeight = avgWeight;
+            window.chartWeightStdDev = weightStdDev;
+            
+            weightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '平均体重 (kg)',
+                        data: avgWeight,
+                        borderColor: '#1a365d',
+                        backgroundColor: 'rgba(26, 54, 93, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#1a365d',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            beginAtZero: false,
+                            min: yMin,
+                            max: yMax,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(1) + 'kg';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return `平均体重: ${context.parsed.y.toFixed(1)}kg`;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'weightErrorBars',
+                    afterDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const avgData = window.chartAvgWeight || [];
+                        const stdData = window.chartWeightStdDev || [];
+                        
+                        if (!meta || !meta.data) return;
+                        
+                        ctx.save();
+                        ctx.strokeStyle = '#f56500';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([]);
+                        
+                        meta.data.forEach((point, index) => {
+                            if (!point || avgData[index] === null || avgData[index] === undefined) return;
+                            
+                            const x = point.x;
+                            const yScale = chart.scales.y;
+                            const actualStdDev = stdData[index] || 0;
+                            
+                            // 実際の標準偏差を使用（最小値制限なし）
+                            const errorValue = actualStdDev > 0 ? actualStdDev : 1.0;
+                            
+                            const upperValue = avgData[index] + errorValue;
+                            const lowerValue = Math.max(yScale.min || 20, avgData[index] - errorValue);
+                            
+                            const yUpper = yScale.getPixelForValue(upperValue);
+                            const yLower = yScale.getPixelForValue(lowerValue);
+                            
+                            // 縦線（ヒゲ）
+                            ctx.beginPath();
+                            ctx.moveTo(x, yUpper);
+                            ctx.lineTo(x, yLower);
+                            ctx.stroke();
+                            
+                            // 上端の横線
+                            ctx.beginPath();
+                            ctx.moveTo(x - 8, yUpper);
+                            ctx.lineTo(x + 8, yUpper);
+                            ctx.stroke();
+                            
+                            // 下端の横線
+                            ctx.beginPath();
+                            ctx.moveTo(x - 8, yLower);
+                            ctx.lineTo(x + 8, yLower);
+                            ctx.stroke();
+                        });
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+        
+        // 日付フォーマット
+        function formatDate(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            const weekday = weekdays[date.getDay()];
+            return `${month}/${day}(${weekday})`;
+        }
+        
+        // データをエクスポート
+        function exportData() {
+            if (healthData.length === 0) {
+                showAlert('adminAlert', 'エクスポートするデータがありません。', 'warning');
+                return;
+            }
+            
+            const csv = convertToCSV(healthData);
+            downloadCSV(csv, `handball_health_data_${formatDateForFile(new Date())}.csv`);
+            showAlert('adminAlert', 'データをエクスポートしました。', 'success');
+        }
+        
+        // 週間レポートをエクスポート
+        function exportWeeklyReport() {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const weekData = healthData.filter(data => new Date(data.date) >= sevenDaysAgo);
+            
+            if (weekData.length === 0) {
+                showAlert('adminAlert', '週間データがありません。', 'warning');
+                return;
+            }
+            
+            const csv = convertToCSV(weekData);
+            downloadCSV(csv, `handball_weekly_report_${formatDateForFile(new Date())}.csv`);
+            showAlert('adminAlert', '週間レポートをエクスポートしました。', 'success');
+        }
+        
+        // 個人別レポートをエクスポート
+        function exportPlayerReport() {
+            if (players.length === 0) {
+                showAlert('adminAlert', '登録されている選手がいません。', 'warning');
+                return;
+            }
+            
+            const playerName = prompt('レポートを出力する選手名を入力してください:\n' + players.join(', '));
+            if (!playerName || !players.includes(playerName)) {
+                showAlert('adminAlert', '有効な選手名を入力してください。', 'warning');
+                return;
+            }
+            
+            const playerData = healthData.filter(data => data.player === playerName);
+            if (playerData.length === 0) {
+                showAlert('adminAlert', `${playerName}のデータがありません。`, 'warning');
+                return;
+            }
+            
+            const csv = convertToCSV(playerData);
+            downloadCSV(csv, `handball_${playerName}_report_${formatDateForFile(new Date())}.csv`);
+            showAlert('adminAlert', `${playerName}の個人レポートをエクスポートしました。`, 'success');
+        }
+        
+        // CSVに変換
+        function convertToCSV(data) {
+            const headers = ['日付', '選手名', 'からだの疲労感(ボルグ)', '体重', 'メモ'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    formatDateForCSV(new Date(row.date)),
+                    row.player,
+                    row.wellness,
+                    row.weight,
+                    `"${row.notes.replace(/"/g, '""')}"`
+                ].join(','))
+            ].join('\n');
+            
+            return csvContent;
+        }
+        
+        // CSVをダウンロード
+        function downloadCSV(csv, filename) {
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // データをインポート
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    const headers = lines[0].split(',');
+                    
+                    let importCount = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const values = parseCSVLine(line);
+                        if (values.length >= 5) {
+                            const [dateStr, playerName, wellness, weight, notes] = values;
+                            
+                            // 選手が登録されていない場合は追加
+                            if (!players.includes(playerName)) {
+                                players.push(playerName);
+                            }
+                            
+                            // データを追加
+                            const newData = {
+                                id: Date.now().toString() + '_' + importCount,
+                                player: playerName,
+                                date: new Date(dateStr).toISOString(),
+                                wellness: parseInt(wellness),
+                                weight: parseFloat(weight),
+                                notes: notes.replace(/^"|"$/g, '').replace(/""/g, '"')
+                            };
+                            
+                            healthData.push(newData);
+                            importCount++;
+                        }
+                    }
+                    
+                    saveData();
+                    updatePlayerSelect();
+                    updatePlayerList();
+                    updateStatistics();
+                    
+                    showAlert('adminAlert', `${importCount}件のデータをインポートしました。`, 'success');
+                } catch (error) {
+                    showAlert('adminAlert', 'CSVファイルの読み込みに失敗しました。', 'danger');
+                }
+                
+                fileInput.value = '';
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        // CSV行をパース
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+        
+        // 全データ削除
+        function clearAllData() {
+            if (confirm('本当に全てのデータを削除しますか？この操作は取り消せません。')) {
+                if (confirm('最終確認：全データが完全に削除されます。よろしいですか？')) {
+                    players = [];
+                    healthData = [];
+                    saveData();
+                    updatePlayerSelect();
+                    updatePlayerList();
+                    updateStatistics();
+                    showAlert('adminAlert', '全てのデータを削除しました。', 'success');
+                }
+            }
+        }
+        
+        // データを保存
+        function saveData() {
+            localStorage.setItem('players', JSON.stringify(players));
+            localStorage.setItem('healthData', JSON.stringify(healthData));
+        }
+        
+        // アラートを表示
+        function showAlert(elementId, message, type) {
+            const alertElement = document.getElementById(elementId);
+            alertElement.className = `alert alert-${type}`;
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // ファイル名用の日付フォーマット
+        function formatDateForFile(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        // CSV用の日付フォーマット
+        function formatDateForCSV(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}/${month}/${day} ${hours}:${minutes}`;
+        }
+    </script>
+</body>
+</html>
